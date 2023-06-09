@@ -13,8 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/crowdsecurity/go-cs-lib/pkg/cstest"
+	"github.com/crowdsecurity/go-cs-lib/pkg/ptr"
+
 	"github.com/crowdsecurity/crowdsec/pkg/csconfig"
-	"github.com/crowdsecurity/crowdsec/pkg/cstest"
 	"github.com/crowdsecurity/crowdsec/pkg/database"
 	"github.com/crowdsecurity/crowdsec/pkg/models"
 	"github.com/crowdsecurity/crowdsec/pkg/types"
@@ -220,7 +222,7 @@ func TestRegexpCacheBehavior(t *testing.T) {
 	require.NoError(t, err)
 
 	//cache with no TTL
-	err = RegexpCacheInit(filename, types.DataSource{Type: "regex", Size: types.IntPtr(1)})
+	err = RegexpCacheInit(filename, types.DataSource{Type: "regex", Size: ptr.Of(1)})
 	require.NoError(t, err)
 
 	ret, _ := RegexpInFile("crowdsec", filename)
@@ -233,7 +235,7 @@ func TestRegexpCacheBehavior(t *testing.T) {
 
 	//cache with TTL
 	ttl := 500 * time.Millisecond
-	err = RegexpCacheInit(filename, types.DataSource{Type: "regex", Size: types.IntPtr(2), TTL: &ttl})
+	err = RegexpCacheInit(filename, types.DataSource{Type: "regex", Size: ptr.Of(2), TTL: &ttl})
 	require.NoError(t, err)
 
 	ret, _ = RegexpInFile("crowdsec", filename)
@@ -1395,6 +1397,18 @@ func TestParseKv(t *testing.T) {
 			name:     "ParseKV() test: quoted string",
 			value:    `foo="bar=toto"`,
 			expected: map[string]string{"foo": "bar=toto"},
+			expr:     `ParseKV(value, out, "a")`,
+		},
+		{
+			name:     "ParseKV() test: empty unquoted string",
+			value:    `foo= bar=toto`,
+			expected: map[string]string{"bar": "toto", "foo": ""},
+			expr:     `ParseKV(value, out, "a")`,
+		},
+		{
+			name:     "ParseKV() test: empty quoted string ",
+			value:    `foo="" bar=toto`,
+			expected: map[string]string{"bar": "toto", "foo": ""},
 			expr:     `ParseKV(value, out, "a")`,
 		},
 	}

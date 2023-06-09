@@ -20,15 +20,15 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/umahmood/haversine"
+	"github.com/wasilibs/go-re2"
+
+	"github.com/crowdsecurity/go-cs-lib/pkg/ptr"
 
 	"github.com/crowdsecurity/crowdsec/pkg/cache"
 	"github.com/crowdsecurity/crowdsec/pkg/database"
 	"github.com/crowdsecurity/crowdsec/pkg/fflag"
 	"github.com/crowdsecurity/crowdsec/pkg/types"
-
-	"github.com/wasilibs/go-re2"
 )
 
 var dataFile map[string][]string
@@ -51,7 +51,7 @@ var dbClient *database.Client
 
 var exprFunctionOptions []expr.Option
 
-var keyValuePattern = regexp.MustCompile(`\s*(?P<key>[^=\s]+)\s*=\s*(?:"(?P<quoted_value>[^"\\]*(?:\\.[^"\\]*)*)"|(?P<value>[^=\s]+))`)
+var keyValuePattern = regexp.MustCompile(`(?P<key>[^=\s]+)=(?:"(?P<quoted_value>[^"\\]*(?:\\.[^"\\]*)*)"|(?P<value>[^=\s]+)|\s*)`)
 
 func GetExprOptions(ctx map[string]interface{}) []expr.Option {
 	ret := []expr.Option{}
@@ -91,13 +91,13 @@ func RegexpCacheInit(filename string, CacheCfg types.DataSource) error {
 	//cache is enabled
 
 	if CacheCfg.Size == nil {
-		CacheCfg.Size = types.IntPtr(50)
+		CacheCfg.Size = ptr.Of(50)
 	}
 
 	gc := gcache.New(*CacheCfg.Size)
 
 	if CacheCfg.Strategy == nil {
-		CacheCfg.Strategy = types.StrPtr("LRU")
+		CacheCfg.Strategy = ptr.Of("LRU")
 	}
 	switch *CacheCfg.Strategy {
 	case "LRU":
